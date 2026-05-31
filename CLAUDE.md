@@ -9,6 +9,7 @@
 ## 1. 프로젝트 개요
 
 - **사이트**: eunbilog.com
+- **GitHub**: https://github.com/eun98bi/eunbilog.git
 - **구조**: 허브형 — 랜딩(`/`) + 블로그(`/blog`)
 - **스택**: Next.js 14 (App Router), MDX, Tailwind CSS, Vercel
 - **콘텐츠 저장**: 파일 기반 (`/content/blog/[category]/[slug].mdx`)
