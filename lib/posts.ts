@@ -11,6 +11,8 @@ export type Category =
   | 'affiliate'
   | 'gov-info'
   | 'side-hustle'
+  | 'ai-news'
+  | 'travel'
 
 export const CATEGORIES: Category[] = [
   'app-dev',
@@ -19,6 +21,8 @@ export const CATEGORIES: Category[] = [
   'affiliate',
   'gov-info',
   'side-hustle',
+  'ai-news',
+  'travel',
 ]
 
 export const CATEGORY_LABELS: Record<Category, string> = {
@@ -28,6 +32,8 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   affiliate: '제휴',
   'gov-info': '행정 정보',
   'side-hustle': '부업',
+  'ai-news': 'AI 뉴스',
+  travel: '여행',
 }
 
 export interface AffiliateLink {

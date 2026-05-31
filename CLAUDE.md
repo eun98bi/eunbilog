@@ -34,9 +34,11 @@ eunbilog/
 │       ├── app-dev/              # 앱 개발기
 │       ├── baseball/             # 야구 콘텐츠 + 야구일기
 │       ├── tooltoolz/            # ToolToolz 유입
-│       ├── affiliate/            # 제휴 콘텐츠 (마이리얼트립·쿠팡·에이블리)
+│       ├── affiliate/            # 제휴 콘텐츠 (쿠팡·에이블리)
 │       ├── gov-info/             # 정부 서류 / 행정 정보
-│       └── side-hustle/          # 부업 / 파이프라인
+│       ├── side-hustle/          # 부업 / 파이프라인
+│       ├── ai-news/              # AI 뉴스·소식·정보
+│       └── travel/               # 여행 콘텐츠 (마이리얼트립 제휴)
 ├── lib/
 │   └── posts.ts                  # MDX 파싱 유틸리티
 ├── components/
@@ -61,7 +63,7 @@ eunbilog/
 title: "제목 (60자 이내, SEO 최적화)"
 slug: "url-friendly-slug-in-korean-or-english"
 date: "YYYY-MM-DD"
-category: "app-dev | baseball | tooltoolz | affiliate | gov-info | side-hustle"
+category: "app-dev | baseball | tooltoolz | affiliate | gov-info | side-hustle | ai-news | travel"
 tags: ["태그1", "태그2", "태그3"]  # 3~5개
 excerpt: "검색결과·카드에 노출되는 요약 (150자 이내)"
 coverImage: "/images/blog/카테고리/slug-cover.jpg"  # 없으면 null
@@ -86,9 +88,11 @@ seo:
 | `app-dev` | null | 개발 과정 솔직하게, 실패도 기록 |
 | `baseball` | null | KBO 경기 결과 포함 시 날짜 명시 |
 | `tooltoolz` | null | 반드시 tooltoolz.com 링크 포함 |
-| `affiliate` | platform 명시 | 제휴 링크 필수, 상단 disclosure 포함 |
+| `affiliate` | platform 명시 (coupang \| ably) | 제휴 링크 필수, 상단 disclosure 포함. 마이리얼트립은 travel 카테고리로 |
 | `gov-info` | null | 정확한 출처·날짜 명시 필수 |
 | `side-hustle` | null | 실제 수익/결과 수치 포함 권장 |
+| `ai-news` | null | 최신 AI 뉴스·모델·서비스 정보. 웹 검색 필수. 출처 링크 포함 |
+| `travel` | myrealtrip | 여행 정보 + 마이리얼트립 제휴 링크. disclosure 포함 필수 |
 
 ---
 
@@ -126,10 +130,12 @@ seo:
 
 예시:
 "baseball 글 써줘"      → 오늘 KBO 경기 결과 검색 후 주제 선정
-"affiliate 글 써줘"     → 계절·트렌드 기반 제휴 주제 자동 선정
+"affiliate 글 써줘"     → 계절·트렌드 기반 쿠팡·에이블리 제휴 주제 자동 선정
 "gov-info 글 써줘"      → 최근 자주 검색되는 행정 정보 주제 선정
 "app-dev 글 써줘"       → content-plan.md 예정 항목 또는 최근 작업 기반
 "side-hustle 글 써줘"   → 현재 운영 중인 프로젝트 기반 주제 선정
+"ai-news 글 써줘"       → 최근 AI 뉴스·모델·서비스 중 주목할 주제 자동 선정
+"travel 글 써줘"        → 계절 여행지·항공권·숙소 마이리얼트립 제휴 주제 자동 선정
 
 # 추가 옵션 (필요 시 붙이기)
 + "키워드: [SEO 키워드]"
@@ -148,7 +154,7 @@ seo:
 - **태그 선택**: 카테고리 + 주제 기반으로 3~5개 자동 생성
 - **excerpt 작성**: 본문 첫 단락 기반으로 자동 요약
 - **SEO 키워드**: 주제 분석 후 검색량 높을 키워드 3~5개 선택
-- **웹 검색 여부**: `gov-info`, `affiliate` 카테고리는 항상 검색 후 작성
+- **웹 검색 여부**: `gov-info`, `affiliate`, `travel`, `ai-news` 카테고리는 항상 검색 후 작성
   - `baseball`은 당일 경기 글이면 검색, 그 외는 생략
   - `app-dev`, `side-hustle`은 검색 생략 (경험 기반 글)
 
@@ -174,11 +180,13 @@ seo:
 | 카테고리 | 탐색 전략 | 검색 쿼리 예시 |
 |---|---|---|
 | `baseball` | 오늘 날짜 KBO 경기 결과 우선 | `"KBO 오늘 경기 결과 [날짜]"`, `"한화 이글스 최근 경기"` |
-| `affiliate` | 계절·시즌·트렌드 기반 | `"[현재 월] 여행 추천"`, `"요즘 인기 쿠팡 제품"`, `"에이블리 신상"` |
+| `affiliate` | 계절·시즌·트렌드 기반 (쿠팡·에이블리) | `"요즘 인기 쿠팡 제품"`, `"에이블리 신상 [현재 월]"` |
 | `gov-info` | 최근 정책 변경·신청 기간 임박 항목 | `"[현재 월] 정부 지원금 신청"`, `"최근 행정 서비스 변경"` |
 | `app-dev` | content-plan.md 우선, 없으면 최근 커밋 기반 | `git log --oneline -5` 실행 후 최근 작업 주제 파악 |
 | `tooltoolz` | tooltoolz.com 기능 중 아직 소개 안 한 도구 | 기존 포스트 목록 확인 후 미소개 도구 선정 |
 | `side-hustle` | 현재 운영 프로젝트 중 공유할 내용 | content-plan.md + 최근 개발 로그 기반 |
+| `ai-news` | 최근 1주일 내 주요 AI 뉴스·릴리즈 | `"AI 뉴스 [날짜]"`, `"최신 AI 모델 출시"`, `"인공지능 서비스 업데이트"` |
+| `travel` | 계절·여행 시즌 기반 마이리얼트립 연관 목적지 | `"[현재 월] 여행 추천"`, `"마이리얼트립 [여행지] 항공권"`, `"[여행지] 여행 코스"` |
 
 #### 주제 선정 기준 (우선순위 순)
 
@@ -189,14 +197,22 @@ seo:
 
 #### affiliate 카테고리 특별 규칙
 
-주제 자동 탐색 시 플랫폼도 함께 선정한다:
+`affiliate` 카테고리는 **쿠팡·에이블리** 전용이다. 마이리얼트립 제휴 콘텐츠는 반드시 `travel` 카테고리를 사용한다.
+
+주제 자동 탐색 시 플랫폼 선정 기준:
 
 ```
-현재 월 기준:
-- 3~5월: 마이리얼트립 (봄 여행 시즌)
-- 6~8월: 에이블리 (여름 패션) + 마이리얼트립 (여름 휴가)
-- 9~11월: 마이리얼트립 (단풍·가을 여행) + 쿠팡 (추석 선물)
+affiliate (쿠팡·에이블리):
+- 6~8월: 에이블리 (여름 패션)
+- 9~11월: 쿠팡 (추석 선물·가을 용품)
 - 12~2월: 쿠팡 (연말·설날) + 에이블리 (겨울 패션)
+- 3~5월: 에이블리 (봄 패션) + 쿠팡 (봄 생활용품)
+
+travel (마이리얼트립):
+- 3~5월: 봄 여행 시즌 (일본·동남아·제주)
+- 6~8월: 여름 휴가 (동남아·유럽·국내 워터파크 근처)
+- 9~11월: 단풍·가을 여행 (일본·국내)
+- 12~2월: 연말·겨울 여행 (동남아·해외 도시 여행)
 ```
 
 제휴 링크가 없는 경우 `published: false`로 저장하고 아래 메시지 출력:
@@ -238,6 +254,17 @@ KBO 팀명은 공식명 사용 (한화 이글스, 삼성 라이온즈 등).
 **side-hustle**: 구체적인 수치 포함 권장 (수익, 시간, 비용).
 "나도 할 수 있다"는 느낌보다 "이렇게 해봤다"는 기록 느낌.
 
+**ai-news**: 뉴스 요약 + 개인 의견 한 줄 포함. 출처 링크 필수.
+너무 기술적이지 않게, 일반 독자도 읽을 수 있는 수준으로.
+
+**travel**: 여행 경험담처럼 써야 함. 가격·예약 팁 포함 권장.
+상단에 반드시 disclosure 삽입:
+```mdx
+> 💡 이 포스트에는 마이리얼트립 제휴 링크가 포함되어 있어요.
+> 링크를 통해 예약하시면 저에게 소정의 수수료가 지급됩니다.
+```
+마이리얼트립 링크는 본문 중간 + 끝 최소 2회 삽입.
+
 ---
 
 ## 6. SEO 체크리스트
@@ -250,7 +277,9 @@ KBO 팀명은 공식명 사용 (한화 이글스, 삼성 라이온즈 등).
 - [ ] h2 소제목 최소 2개
 - [ ] 내부 링크 최소 1개 (다른 포스트 또는 eunbilog.com 페이지)
 - [ ] affiliate 카테고리: 제휴 링크 disclosure 포함
+- [ ] travel 카테고리: 마이리얼트립 disclosure + 링크 2회 이상 포함
 - [ ] tooltoolz 카테고리: tooltoolz.com 링크 포함
+- [ ] ai-news 카테고리: 출처 링크 포함
 
 ---
 
@@ -324,7 +353,10 @@ git push origin main
 
 - `published: true` 상태로 사실 확인 안 된 정보 올리지 말 것
 - gov-info 카테고리: 웹 검색 없이 작성 금지
-- 제휴 링크 없이 affiliate 카테고리 글 완성 처리 금지
+- ai-news 카테고리: 웹 검색 없이 작성 금지, 출처 없는 정보 게시 금지
+- 제휴 링크 없이 affiliate 또는 travel 카테고리 글 완성 처리 금지
+- travel 카테고리에 마이리얼트립 외 제휴 플랫폼(쿠팡·에이블리) 링크 넣지 말 것
+- affiliate 카테고리에 마이리얼트립 링크 넣지 말 것 (travel 카테고리 사용)
 - 이미 존재하는 slug로 새 파일 생성 금지 (덮어쓰기 위험)
   → 생성 전 반드시 `ls content/blog/[category]/` 확인
 - git push 전 frontmatter 누락 여부 반드시 검토

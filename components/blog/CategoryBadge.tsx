@@ -7,6 +7,8 @@ const COLOR_MAP: Record<Category, string> = {
   affiliate: 'bg-orange-100 text-orange-700',
   'gov-info': 'bg-gray-100 text-gray-700',
   'side-hustle': 'bg-yellow-100 text-yellow-700',
+  'ai-news': 'bg-cyan-100 text-cyan-700',
+  travel: 'bg-teal-100 text-teal-700',
 }
 
 interface Props {
