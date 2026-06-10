@@ -9,8 +9,9 @@ export interface TikTokProduct {
 export const TIKTOK_PRODUCTS: TikTokProduct[] = [
   {
     code: '001',
-    name: 'abc',
-    amazonUrl: 'https://www.amazon.com/dp/REPLACE_WITH_ASIN?tag=YOUR_AFFILIATE_TAG-20',
+    name: 'SK-II Facial Treatment Clear Lotion',
+    amazonUrl: 'https://amzn.to/4efiLum',
+    image: '/images/tiktokshop/001.jpg',
     description: 'As seen in our TikTok video.',
   },
 ]

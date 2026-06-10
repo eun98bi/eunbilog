@@ -49,6 +49,14 @@ export default function TikTokShopPage() {
             key={product.code}
             className="rounded-2xl border border-gray-200 p-5"
           >
+            {product.image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.image}
+                alt={product.name}
+                className="mb-3 w-full max-w-xs rounded-xl object-cover"
+              />
+            )}
             <div className="mb-1 text-xs font-medium text-gray-400">
               Product code {product.code}
             </div>
