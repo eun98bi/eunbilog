@@ -44,7 +44,9 @@ export default function TikTokShopPage() {
       )}
 
       <ul className="space-y-4">
-        {(searched ? results : TIKTOK_PRODUCTS).map((product) => (
+        {[...(searched ? results : TIKTOK_PRODUCTS)]
+          .sort((a, b) => b.code.localeCompare(a.code))
+          .map((product) => (
           <li
             key={product.code}
             className="rounded-2xl border border-gray-200 p-5"
