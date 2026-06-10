@@ -43,7 +43,7 @@ export default function TikTokShopPage() {
         </p>
       )}
 
-      <ul className="space-y-4">
+      <ul className="grid grid-cols-2 gap-4">
         {[...(searched ? results : TIKTOK_PRODUCTS)]
           .sort((a, b) => b.code.localeCompare(a.code))
           .map((product) => (
@@ -56,7 +56,7 @@ export default function TikTokShopPage() {
               <img
                 src={product.image}
                 alt={product.name}
-                className="mb-3 w-full max-w-xs rounded-xl object-cover"
+                className="mb-3 w-full rounded-xl object-cover"
               />
             )}
             <div className="mb-1 text-xs font-medium text-gray-400">
