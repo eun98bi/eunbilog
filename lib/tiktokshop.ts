@@ -11,7 +11,7 @@ export const TIKTOK_PRODUCTS: TikTokProduct[] = [
     code: '001',
     name: 'abc',
     amazonUrl: 'https://www.amazon.com/dp/REPLACE_WITH_ASIN?tag=YOUR_AFFILIATE_TAG-20',
-    description: '틱톡 영상에서 소개한 상품입니다.',
+    description: 'As seen in our TikTok video.',
   },
 ]
 
