@@ -14,6 +14,13 @@ export const TIKTOK_PRODUCTS: TikTokProduct[] = [
     image: '/images/tiktokshop/001.jpg',
     description: 'As seen in our TikTok video.',
   },
+  {
+    code: '002',
+    name: 'Medicube Age-R Booster Pro',
+    amazonUrl: 'https://amzn.to/4eywOwr',
+    image: '/images/tiktokshop/002.jpg',
+    description: 'As seen in our TikTok video.',
+  },
 ]
 
 export function findTikTokProduct(query: string): TikTokProduct | undefined {
