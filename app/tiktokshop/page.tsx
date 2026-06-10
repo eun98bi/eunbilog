@@ -44,7 +44,7 @@ export default function TikTokShopPage() {
       )}
 
       <ul className="space-y-4">
-        {results.map((product) => (
+        {(searched ? results : TIKTOK_PRODUCTS).map((product) => (
           <li
             key={product.code}
             className="rounded-2xl border border-gray-200 p-5"
@@ -75,12 +75,6 @@ export default function TikTokShopPage() {
           </li>
         ))}
       </ul>
-
-      {!searched && (
-        <div className="mt-12 text-xs text-gray-400">
-          All product codes: {TIKTOK_PRODUCTS.map((p) => p.code).join(', ')}
-        </div>
-      )}
     </main>
   )
 }
