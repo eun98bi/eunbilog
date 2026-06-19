@@ -3,6 +3,8 @@
 ## 예정
 
 ## 완료
+- [x] 2026-06-19: side-hustle - yourweddingai.com 소개 (셀카 → AI 웨딩 화보, 일반/신부/신랑 3편)
+- [x] 2026-06-02: side-hustle - 아이돌 교차편집 쇼츠 채널 3개 소셜러스 판매 소개
 - [x] 2026-06-01: ai-news - GPT-5.5 Instant 출시 - ChatGPT 기본 모델 교체
 - [x] 2026-06-01: ai-news - 구글 I/O 2026 - Gemini 3.5로 AI 에이전트 시대 선언
 - [x] 2026-06-01: ai-news - Claude Opus 4.8 출시 - 더 솔직해진 Anthropic의 AI
