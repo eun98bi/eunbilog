@@ -19,7 +19,7 @@ export const revalidate = 60
 const markdownComponents = {
   blockquote({ children }: { children?: ReactNode }) {
     return (
-      <blockquote className="my-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+      <blockquote className="my-4 rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-500">
         {children}
       </blockquote>
     )
