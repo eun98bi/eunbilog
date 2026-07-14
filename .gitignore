@@ -28,6 +28,9 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# auto-generation local history/scratch (scripts/auto)
+/tmp/
+
 # vercel
 .vercel
 

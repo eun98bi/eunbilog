@@ -49,7 +49,15 @@ eunbilog/
 │       ├── AffiliateBlock.tsx    # 제휴 링크 버튼 (상세 페이지가 자동 렌더링)
 │       └── ToolToolzBanner.tsx   # ToolToolz 배너 (category === 'tooltoolz'일 때 자동 렌더링)
 ├── scripts/
-│   └── post.mjs                  # Claude Code가 글을 DB에 직접 upsert하는 CLI
+│   ├── post.mjs                  # Claude Code가 글을 DB에 직접 upsert하는 CLI
+│   └── auto/                     # baseball/affiliate/travel/ai-news 자동 작성용 데이터 유틸 (섹션 11)
+│       ├── fetch-news.mjs        # 네이버 뉴스검색 (baseball/ai-news 원본 데이터)
+│       ├── fetch-coupang-best.mjs
+│       ├── fetch-myrealtrip.mjs
+│       ├── fetch-og-image.mjs
+│       ├── list-recent-posts.mjs # 카테고리 최근 글 조회 (중복 주제 방지)
+│       ├── generate-image.mjs    # Gemini 이미지 생성 + Supabase Storage 업로드 (원본 사진 없을 때만)
+│       └── lib/                  # 공용 모듈 (Supabase upsert, 뉴스/쿠팡/마이리얼트립 API 등)
 ├── supabase/
 │   └── schema.sql                # posts 테이블 + RLS 정의 (Supabase SQL Editor에서 실행)
 ├── middleware.ts                 # /admin 세션 보호
@@ -367,3 +375,49 @@ git push origin main
 - 이미 존재하는 `(category, slug)` 조합으로 upsert하면 기존 글을 덮어쓴다 —
   의도한 수정이 아니라면 slug를 다르게 지정할 것 (→ `/admin` 대시보드에서 기존 글 확인)
 - `node scripts/post.mjs` 실행 전 JSON의 필수 필드 누락 여부 반드시 검토
+
+---
+
+## 11. API 기반 자동 작성 (baseball / affiliate / travel / ai-news)
+
+이 4개 카테고리는 사용자가 **이 채팅에서 지시**하면(예: "baseball 자동으로 써줘",
+"affiliate 3개 자동으로 써줘", "travel 오사카 자동으로 써줘", "ai-news 자동으로 써줘")
+Claude가 아래 순서로 직접 처리한다. `scripts/auto/*.mjs`는 원본 데이터만 JSON으로
+가져오는 얇은 유틸이고, **글 작성은 항상 Claude가 직접 한다** (Gemini는 이미지 생성
+용도로만 사용, 아래 4번 참조).
+
+```
+1. [Bash] 해당 fetch 스크립트로 원본 데이터 조회
+   - baseball: node scripts/auto/fetch-news.mjs "한화 이글스 야구" 10   (팀마다 반복)
+   - affiliate: node scripts/auto/fetch-coupang-best.mjs               (카테고리 생략 시 자동 선택)
+   - travel: node scripts/auto/fetch-myrealtrip.mjs "오사카" 5
+   - ai-news: node scripts/auto/fetch-news.mjs "AI" 20
+2. [Bash] node scripts/auto/list-recent-posts.mjs <category> 로 최근 글 확인 → 중복 주제 회피
+3. [Claude 작성] title/slug/date/tags/excerpt/content를 섹션 3 스펙 + 섹션 5 스타일
+   가이드에 맞게 직접 작성
+   - baseball: fetch-news.mjs 결과에 없는 스코어/수치/발언을 지어내지 말 것
+   - affiliate/travel: 섹션 5의 disclosure 블록쿼트를 본문 최상단에 그대로 포함,
+     affiliate 필드(platform/links)도 직접 채움 (쿠팡 productUrl / 마이리얼트립 linkUrl)
+4. [이미지] 원본 사진이 있으면(뉴스 og:image, 쿠팡 productImage, 마이리얼트립
+   offer.photos[0]) 그 URL을 본문에 `![](url)`로 직접 삽입.
+   - og:image가 필요하면: node scripts/auto/fetch-og-image.mjs "<기사 URL>"
+   - 원본 사진이 아예 없을 때만(주로 ai-news): node scripts/auto/generate-image.mjs
+     "<이미지 프롬프트>" <slug> 로 Gemini가 이미지를 만들어 Supabase Storage에 올리고
+     반환된 URL을 본문에 삽입 (사전에 Storage에 "post-images" 공개 버킷 필요)
+5. [Write + Bash] 완성된 JSON을 스크래치 경로에 쓰고 node scripts/post.mjs <file>로 게시
+6. 완료 보고: 카테고리/슬러그/게시 여부 출력
+```
+
+- 건수가 많은 요청("구단 10개 다 써줘" 등)은 Agent tool로 항목별 서브에이전트를 병렬로
+  띄워 각자 위 1~6을 수행하게 해도 된다 (매번 새 에이전트 정의를 만들 필요는 없고,
+  general-purpose 서브에이전트에 동일한 절차를 지시하면 됨). 소량 요청은 그냥 직접 처리.
+- **gov-info, app-dev, side-hustle, tooltoolz, 에이블리 제휴**는 이 API 기반 흐름
+  대상이 아니다 — gov-info는 정확성 요구가 높아 API 원본만으로 자동 판단하기보다
+  기존 웹서치 기반 대화 워크플로우(섹션 4)가 안전하고, 나머지는 애초에 경험 기반이라
+  이 흐름과 맞지 않는다.
+- 실행에 필요한 키: `GEMINI_API_KEY`(이미지 생성용), `COUPANG_ACCESS_KEY`/`COUPANG_SECRET_KEY`,
+  `MRT_API_KEY`, `NAVER_SEARCH_CLIENT_ID`/`NAVER_SEARCH_CLIENT_SECRET` (모두 `.env.local`)
+- 외부 API(쿠팡/마이리얼트립/네이버) 호출은 사용자의 실제 크레덴셜과 쿼터를 소비하므로,
+  Claude는 사용자가 명시적으로 요청한 횟수만큼만 실행한다
+- 자동 작성 글도 결국 섹션 3 JSON 스펙과 동일한 형태로 upsert되므로, 다른 글과 동일하게
+  `/admin`에서 확인·수정·삭제할 수 있다
