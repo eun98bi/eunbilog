@@ -50,7 +50,7 @@ eunbilog/
 │       └── ToolToolzBanner.tsx   # ToolToolz 배너 (category === 'tooltoolz'일 때 자동 렌더링)
 ├── scripts/
 │   ├── post.mjs                  # Claude Code가 글을 DB에 직접 upsert하는 CLI
-│   └── auto/                     # baseball/affiliate/travel/ai-news 자동 작성용 데이터 유틸 (섹션 11)
+│   └── auto/                     # baseball/affiliate/travel/ai-news 자동 작성용 데이터 유틸 (섹션 10)
 │       ├── fetch-news.mjs        # 네이버 뉴스검색 (baseball/ai-news 원본 데이터)
 │       ├── fetch-coupang-best.mjs
 │       ├── fetch-myrealtrip.mjs
@@ -61,8 +61,7 @@ eunbilog/
 ├── supabase/
 │   └── schema.sql                # posts 테이블 + RLS 정의 (Supabase SQL Editor에서 실행)
 ├── middleware.ts                 # /admin 세션 보호
-├── CLAUDE.md                     # 이 파일
-└── content-plan.md               # 콘텐츠 계획 (에이전트가 참조)
+└── CLAUDE.md                     # 이 파일
 ```
 
 ---
@@ -121,11 +120,10 @@ eunbilog/
 
 ```
 1. [Web Search] 주제 관련 최신 정보 검색 (필요 시)
-2. [Read] content-plan.md 확인 → 예정 포스트 있는지 체크
-3. [Write] 스크래치 경로에 post.json 작성 (섹션 3 스펙 준수)
-4. [Read] 작성한 JSON 재검토 (필수 필드 누락 없는지 확인)
-5. [Bash] node scripts/post.mjs <post.json> 실행 → Supabase에 즉시 upsert
-6. 완료 보고: 카테고리/슬러그 + 게시 여부(published) 출력
+2. [Write] 스크래치 경로에 post.json 작성 (섹션 3 스펙 준수)
+3. [Read] 작성한 JSON 재검토 (필수 필드 누락 없는지 확인)
+4. [Bash] node scripts/post.mjs <post.json> 실행 → Supabase에 즉시 upsert
+5. 완료 보고: 카테고리/슬러그 + 게시 여부(published) 출력
    (게시된 글은 최대 60초 이내 https://www.eunbilog.com/blog/[category]/[slug] 에 반영)
 ```
 
@@ -155,7 +153,7 @@ eunbilog/
 "baseball 글 써줘"      → 오늘 KBO 경기 결과 검색 후 주제 선정
 "affiliate 글 써줘"     → 계절·트렌드 기반 쿠팡·에이블리 제휴 주제 자동 선정
 "gov-info 글 써줘"      → 최근 자주 검색되는 행정 정보 주제 선정
-"app-dev 글 써줘"       → content-plan.md 예정 항목 또는 최근 작업 기반
+"app-dev 글 써줘"       → 최근 커밋(git log) 기반으로 주제 선정
 "side-hustle 글 써줘"   → 현재 운영 중인 프로젝트 기반 주제 선정
 "ai-news 글 써줘"       → 최근 AI 뉴스·모델·서비스 중 주목할 주제 자동 선정
 "travel 글 써줘"        → 계절 여행지·항공권·숙소 마이리얼트립 제휴 주제 자동 선정
@@ -188,11 +186,10 @@ eunbilog/
 #### 탐색 순서
 
 ```
-1. [Read] content-plan.md → 예정된 미작성 항목 있으면 그것을 첫 번째 후보로
-2. `/admin` 대시보드 또는 Supabase `posts` 테이블에서 해당 카테고리 기존 글 목록 확인 (중복 방지)
-3. [Web Search] 카테고리별 탐색 쿼리 실행 (아래 표 참조)
-4. 후보 주제 3개 선정 → 그 중 가장 적합한 1개 자동 선택
-5. 선택 이유 한 줄 출력 후 바로 작성 시작
+1. `/admin` 대시보드 또는 Supabase `posts` 테이블에서 해당 카테고리 기존 글 목록 확인 (중복 방지)
+2. [Web Search] 카테고리별 탐색 쿼리 실행 (아래 표 참조)
+3. 후보 주제 3개 선정 → 그 중 가장 적합한 1개 자동 선택
+4. 선택 이유 한 줄 출력 후 바로 작성 시작
    예: "오늘 한화-KT 경기가 있어서 이 주제로 작성합니다."
 ```
 
@@ -205,18 +202,17 @@ eunbilog/
 | `baseball` | 오늘 날짜 KBO 경기 결과 우선 | `"KBO 오늘 경기 결과 [날짜]"`, `"한화 이글스 최근 경기"` |
 | `affiliate` | 계절·시즌·트렌드 기반 (쿠팡·에이블리) | `"요즘 인기 쿠팡 제품"`, `"에이블리 신상 [현재 월]"` |
 | `gov-info` | 최근 정책 변경·신청 기간 임박 항목 | `"[현재 월] 정부 지원금 신청"`, `"최근 행정 서비스 변경"` |
-| `app-dev` | content-plan.md 우선, 없으면 최근 커밋 기반 | `git log --oneline -5` 실행 후 최근 작업 주제 파악 |
+| `app-dev` | 최근 커밋 기반 | `git log --oneline -5` 실행 후 최근 작업 주제 파악 |
 | `tooltoolz` | tooltoolz.com 기능 중 아직 소개 안 한 도구 | 기존 포스트 목록 확인 후 미소개 도구 선정 |
-| `side-hustle` | 현재 운영 프로젝트 중 공유할 내용 | content-plan.md + 최근 개발 로그 기반 |
+| `side-hustle` | 현재 운영 중인 프로젝트/개발 로그 기반 | 최근 작업 내용 중 공유할 만한 것 선정 |
 | `ai-news` | 최근 1주일 내 주요 AI 뉴스·릴리즈 | `"AI 뉴스 [날짜]"`, `"최신 AI 모델 출시"`, `"인공지능 서비스 업데이트"` |
 | `travel` | 계절·여행 시즌 기반 마이리얼트립 연관 목적지 | `"[현재 월] 여행 추천"`, `"마이리얼트립 [여행지] 항공권"`, `"[여행지] 여행 코스"` |
 
 #### 주제 선정 기준 (우선순위 순)
 
 1. **시의성** — 오늘 날짜와 연관된 주제 (경기, 마감, 시즌)
-2. **계획된 항목** — content-plan.md 예정 목록
-3. **검색 수요** — 검색량 높을 것으로 예상되는 주제
-4. **중복 없음** — 기존 포스트와 주제 겹치지 않을 것
+2. **검색 수요** — 검색량 높을 것으로 예상되는 주제
+3. **중복 없음** — 기존 포스트와 주제 겹치지 않을 것
 
 #### affiliate 카테고리 특별 규칙
 
@@ -346,25 +342,7 @@ git push origin main
 
 ---
 
-## 9. content-plan.md 연동
-
-에이전트는 글 작성 전 `content-plan.md`를 읽어서:
-- 이미 계획된 주제가 있으면 그 방향으로 작성
-- 없으면 자유롭게 생성 후 content-plan.md에 완료 항목으로 추가
-
-`content-plan.md` 형식:
-```markdown
-## 예정
-- [ ] baseball: 한화 6월 홈경기 시리즈 후기
-- [ ] affiliate: 에이블리 여름 세일 추천
-
-## 완료
-- [x] 2026-05-31: app-dev - 포도알줍줍 모바일 UI 개선기
-```
-
----
-
-## 10. 에이전트 금지 사항
+## 9. 에이전트 금지 사항
 
 - `published: true` 상태로 사실 확인 안 된 정보 올리지 말 것
 - gov-info 카테고리: 웹 검색 없이 작성 금지
@@ -378,7 +356,7 @@ git push origin main
 
 ---
 
-## 11. API 기반 자동 작성 (baseball / affiliate / travel / ai-news)
+## 10. API 기반 자동 작성 (baseball / affiliate / travel / ai-news)
 
 이 4개 카테고리는 사용자가 **이 채팅에서 지시**하면(예: "baseball 자동으로 써줘",
 "affiliate 3개 자동으로 써줘", "travel 오사카 자동으로 써줘", "ai-news 자동으로 써줘")
