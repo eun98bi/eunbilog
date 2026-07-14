@@ -1,31 +1,36 @@
 import { notFound } from 'next/navigation'
-import { CATEGORIES, Category, getPostBySlug, getPostsByCategory } from '@/lib/posts'
-import { MDXRemote } from 'next-mdx-remote/rsc'
+import { CATEGORIES, Category, getPostBySlug } from '@/lib/posts'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import CategoryBadge from '@/components/blog/CategoryBadge'
 import AffiliateBlock from '@/components/blog/AffiliateBlock'
 import ToolToolzBanner from '@/components/blog/ToolToolzBanner'
-import InfoBox from '@/components/blog/InfoBox'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Metadata } from 'next'
+import { ReactNode } from 'react'
 
 interface Props {
   params: { category: string; slug: string }
 }
 
-const components = { AffiliateBlock, ToolToolzBanner, InfoBox }
+export const revalidate = 60
 
-export async function generateStaticParams() {
-  return CATEGORIES.flatMap((category) =>
-    getPostsByCategory(category).map((post) => ({ category, slug: post.slug }))
-  )
+const markdownComponents = {
+  blockquote({ children }: { children?: ReactNode }) {
+    return (
+      <blockquote className="my-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        {children}
+      </blockquote>
+    )
+  },
 }
 
-export function generateMetadata({ params }: Props): Metadata {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = params.category as Category
   if (!CATEGORIES.includes(category)) return {}
 
-  const post = getPostBySlug(category, params.slug)
+  const post = await getPostBySlug(category, params.slug)
   if (!post) return {}
 
   return {
@@ -40,11 +45,11 @@ export function generateMetadata({ params }: Props): Metadata {
   }
 }
 
-export default function PostPage({ params }: Props) {
+export default async function PostPage({ params }: Props) {
   const category = params.category as Category
   if (!CATEGORIES.includes(category)) notFound()
 
-  const post = getPostBySlug(category, params.slug)
+  const post = await getPostBySlug(category, params.slug)
   if (!post || !post.published) notFound()
 
   return (
@@ -77,8 +82,21 @@ export default function PostPage({ params }: Props) {
       <p className="mb-8 text-lg text-gray-500">{post.excerpt}</p>
 
       <article className="prose prose-gray max-w-none">
-        <MDXRemote source={post.content} components={components} />
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+          {post.content}
+        </ReactMarkdown>
       </article>
+
+      {post.category === 'tooltoolz' && <ToolToolzBanner />}
+
+      {post.affiliate?.links?.map((link) => (
+        <AffiliateBlock
+          key={link.url}
+          platform={post.affiliate!.platform as 'myrealtrip' | 'coupang' | 'ably'}
+          text={link.text}
+          url={link.url}
+        />
+      ))}
 
       <div className="mt-12 flex flex-wrap gap-2 border-t border-gray-100 pt-6">
         {post.tags.map((tag) => (

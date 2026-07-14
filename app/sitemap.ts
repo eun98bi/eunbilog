@@ -3,9 +3,9 @@ import { CATEGORIES, getAllPosts } from '@/lib/posts'
 
 const SITE_URL = 'https://eunbilog.com'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
-  const posts = getAllPosts()
+  const posts = await getAllPosts()
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {

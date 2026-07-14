@@ -8,8 +8,10 @@ export const metadata: Metadata = {
   description: '앱 개발, 야구, 부업, 행정 정보까지 — 은비의 블로그',
 }
 
-export default function BlogPage() {
-  const posts = getAllPosts()
+export const revalidate = 60
+
+export default async function BlogPage() {
+  const posts = await getAllPosts()
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-12">

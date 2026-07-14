@@ -2,8 +2,10 @@ import Link from 'next/link'
 import { getRecentPosts, CATEGORIES, CATEGORY_LABELS } from '@/lib/posts'
 import PostCard from '@/components/blog/PostCard'
 
-export default function HomePage() {
-  const recentPosts = getRecentPosts(6)
+export const revalidate = 60
+
+export default async function HomePage() {
+  const recentPosts = await getRecentPosts(6)
 
   return (
     <main>

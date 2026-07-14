@@ -10,10 +10,11 @@
 
 - **사이트**: eunbilog.com
 - **GitHub**: https://github.com/eun98bi/eunbilog.git
-- **구조**: 허브형 — 랜딩(`/`) + 블로그(`/blog`)
-- **스택**: Next.js 14 (App Router), MDX, Tailwind CSS, Vercel
-- **콘텐츠 저장**: 파일 기반 (`/content/blog/[category]/[slug].mdx`)
-- **배포**: git push → Vercel 자동 빌드
+- **구조**: 허브형 — 랜딩(`/`) + 블로그(`/blog`) + 관리자(`/admin`)
+- **스택**: Next.js 14 (App Router), Supabase (Postgres + Auth), Tailwind CSS, Vercel
+- **콘텐츠 저장**: Supabase `posts` 테이블 (본문은 순수 Markdown 문자열)
+- **콘텐츠 게시**: DB에 insert/upsert하는 즉시 반영 (ISR `revalidate = 60`). 코드 변경만
+  git push → Vercel 재배포 대상이고, 글 자체는 git과 무관하다.
 
 ---
 
@@ -28,58 +29,68 @@ eunbilog/
 │   │   ├── [category]/
 │   │   │   ├── page.tsx          # 카테고리 목록
 │   │   │   └── [slug]/
-│   │   │       └── page.tsx      # 개별 포스트
-├── content/
-│   └── blog/
-│       ├── app-dev/              # 앱 개발기
-│       ├── baseball/             # 야구 콘텐츠 + 야구일기
-│       ├── tooltoolz/            # ToolToolz 유입
-│       ├── affiliate/            # 제휴 콘텐츠 (쿠팡·에이블리)
-│       ├── gov-info/             # 정부 서류 / 행정 정보
-│       ├── side-hustle/          # 부업 / 파이프라인
-│       ├── ai-news/              # AI 뉴스·소식·정보
-│       └── travel/               # 여행 콘텐츠 (마이리얼트립 제휴)
+│   │   │       └── page.tsx      # 개별 포스트 (Markdown 렌더링)
+│   └── admin/                    # 관리자 대시보드 (로그인 필요)
+│       ├── login/page.tsx        # 로그인
+│       ├── page.tsx              # 전체 글 목록 (초안 포함)
+│       ├── posts/new/page.tsx    # 새 글 작성
+│       ├── posts/[id]/edit/page.tsx  # 글 수정/삭제
+│       ├── bulk/page.tsx         # JSON 대량 업로드
+│       └── actions.ts            # 'use server' CRUD 액션
 ├── lib/
-│   └── posts.ts                  # MDX 파싱 유틸리티
+│   ├── posts.ts                  # Supabase에서 posts 테이블 조회
+│   └── supabase/
+│       ├── server.ts             # 서버 컴포넌트/액션용 클라이언트 (세션 인지)
+│       └── client.ts             # 브라우저용 클라이언트 (로그인 폼)
 ├── components/
 │   └── blog/
 │       ├── PostCard.tsx
 │       ├── CategoryBadge.tsx
-│       └── AffiliateBlock.tsx    # 제휴 링크 컴포넌트
-├── public/
-│   └── images/blog/              # 포스트 이미지
+│       ├── AffiliateBlock.tsx    # 제휴 링크 버튼 (상세 페이지가 자동 렌더링)
+│       └── ToolToolzBanner.tsx   # ToolToolz 배너 (category === 'tooltoolz'일 때 자동 렌더링)
+├── scripts/
+│   └── post.mjs                  # Claude Code가 글을 DB에 직접 upsert하는 CLI
+├── supabase/
+│   └── schema.sql                # posts 테이블 + RLS 정의 (Supabase SQL Editor에서 실행)
+├── middleware.ts                 # /admin 세션 보호
 ├── CLAUDE.md                     # 이 파일
 └── content-plan.md               # 콘텐츠 계획 (에이전트가 참조)
 ```
 
 ---
 
-## 3. MDX Frontmatter 스펙
+## 3. 게시글 데이터 스펙 (JSON)
 
-모든 포스트는 아래 frontmatter를 반드시 포함해야 한다.
+모든 포스트는 `scripts/post.mjs`에 넘기는 JSON 파일(단일 객체 또는 배열) 또는 `/admin/bulk`
+텍스트영역에 아래 형태로 작성한다. 이 JSON이 그대로 Supabase `posts` 테이블 행이 된다.
 
-```yaml
----
-title: "제목 (60자 이내, SEO 최적화)"
-slug: "url-friendly-slug-in-korean-or-english"
-date: "YYYY-MM-DD"
-category: "app-dev | baseball | tooltoolz | affiliate | gov-info | side-hustle | ai-news | travel"
-tags: ["태그1", "태그2", "태그3"]  # 3~5개
-excerpt: "검색결과·카드에 노출되는 요약 (150자 이내)"
-coverImage: "/images/blog/카테고리/slug-cover.jpg"  # 없으면 null
-published: true  # false면 초안
-affiliate:
-  platform: "myrealtrip | coupang | ably | null"
-  links:
-    - text: "링크 텍스트"
-      url: "https://..."
-      code: "제휴코드"   # 없으면 생략
-seo:
-  metaTitle: "메타 제목 (없으면 title 사용)"
-  metaDescription: "메타 설명 (없으면 excerpt 사용)"
-  keywords: ["키워드1", "키워드2"]
----
+```jsonc
+{
+  "title": "제목 (60자 이내, SEO 최적화)",
+  "slug": "url-friendly-slug-in-korean-or-english",
+  "date": "YYYY-MM-DD",
+  "category": "app-dev | baseball | tooltoolz | affiliate | gov-info | side-hustle | ai-news | travel",
+  "tags": ["태그1", "태그2", "태그3"],
+  "excerpt": "검색결과·카드에 노출되는 요약 (150자 이내)",
+  "coverImage": "https://... 또는 null",
+  "published": true,
+  "content": "# 마크다운 본문...",
+  "affiliate": {
+    "platform": "myrealtrip | coupang | ably | null",
+    "links": [
+      { "text": "링크 텍스트", "url": "https://...", "code": "제휴코드(선택)" }
+    ]
+  },
+  "seo": {
+    "metaTitle": "메타 제목 (없으면 title 사용)",
+    "metaDescription": "메타 설명 (없으면 excerpt 사용)",
+    "keywords": ["키워드1", "키워드2"]
+  }
+}
 ```
+
+`affiliate`, `seo`, `coverImage`는 없으면 생략 가능 (null 처리됨). 동일한
+`(category, slug)` 조합으로 다시 업로드하면 기존 행을 덮어쓴다(upsert).
 
 ### 카테고리별 필수 규칙
 
@@ -103,11 +114,15 @@ seo:
 ```
 1. [Web Search] 주제 관련 최신 정보 검색 (필요 시)
 2. [Read] content-plan.md 확인 → 예정 포스트 있는지 체크
-3. [Write] /content/blog/[category]/[slug].mdx 생성
-4. [Read] 생성된 파일 검토 (frontmatter 누락 없는지 확인)
-5. [Bash] git add . && git commit -m "post: [slug]" && git push
-6. 완료 보고: 파일 경로 + Vercel 배포 URL 출력
+3. [Write] 스크래치 경로에 post.json 작성 (섹션 3 스펙 준수)
+4. [Read] 작성한 JSON 재검토 (필수 필드 누락 없는지 확인)
+5. [Bash] node scripts/post.mjs <post.json> 실행 → Supabase에 즉시 upsert
+6. 완료 보고: 카테고리/슬러그 + 게시 여부(published) 출력
+   (게시된 글은 최대 60초 이내 https://www.eunbilog.com/blog/[category]/[slug] 에 반영)
 ```
+
+파일을 저장소에 커밋할 필요가 없다 — `scripts/post.mjs`가 DB에 직접 반영하므로 git과
+무관하게 즉시 게시된다. git push는 코드(컴포넌트, 스타일 등) 변경이 있을 때만 한다.
 
 ### 4-2. 글 작성 명령 형식
 
@@ -166,7 +181,7 @@ seo:
 
 ```
 1. [Read] content-plan.md → 예정된 미작성 항목 있으면 그것을 첫 번째 후보로
-2. [Read] content/blog/[category]/ → 기존 포스트 목록 파악 (중복 방지)
+2. `/admin` 대시보드 또는 Supabase `posts` 테이블에서 해당 카테고리 기존 글 목록 확인 (중복 방지)
 3. [Web Search] 카테고리별 탐색 쿼리 실행 (아래 표 참조)
 4. 후보 주제 3개 선정 → 그 중 가장 적합한 1개 자동 선택
 5. 선택 이유 한 줄 출력 후 바로 작성 시작
@@ -239,10 +254,11 @@ travel (마이리얼트립):
 KBO 팀명은 공식명 사용 (한화 이글스, 삼성 라이온즈 등).
 
 **tooltoolz**: "이런 도구 찾다가 내가 만들었어요" 톤으로. 자연스럽게 유입 유도.
-본문 중간 + 끝에 tooltoolz.com 링크 최소 2회 삽입.
+본문 중간에 마크다운 링크로 tooltoolz.com을 최소 1회 언급 (`category: "tooltoolz"`이면
+기사 하단에 배너가 자동으로 추가되어 총 2회 이상 노출된다).
 
 **affiliate**: 상단에 반드시 disclosure 삽입:
-```mdx
+```markdown
 > 💡 이 포스트에는 제휴 링크가 포함되어 있어요.
 > 링크를 통해 구매하시면 저에게 소정의 수수료가 지급됩니다.
 ```
@@ -259,11 +275,12 @@ KBO 팀명은 공식명 사용 (한화 이글스, 삼성 라이온즈 등).
 
 **travel**: 여행 경험담처럼 써야 함. 가격·예약 팁 포함 권장.
 상단에 반드시 disclosure 삽입:
-```mdx
+```markdown
 > 💡 이 포스트에는 마이리얼트립 제휴 링크가 포함되어 있어요.
 > 링크를 통해 예약하시면 저에게 소정의 수수료가 지급됩니다.
 ```
-마이리얼트립 링크는 본문 중간 + 끝 최소 2회 삽입.
+본문 중간에는 일반 마크다운 링크(`[텍스트](url)`)로 마이리얼트립 링크를 최소 1회 삽입.
+`affiliate.links`에 채워두면 기사 하단에 버튼이 자동으로 추가되므로 총 2회 이상 노출된다.
 
 ---
 
@@ -283,51 +300,41 @@ KBO 팀명은 공식명 사용 (한화 이글스, 삼성 라이온즈 등).
 
 ---
 
-## 7. 배포 명령어 참조
+## 7. 게시 명령어 참조
 
 ```bash
-# 글 작성 후 배포
-git add content/blog/[category]/[slug].mdx
-git commit -m "post: [카테고리] [제목 요약]"
-git push origin main
+# 글 1개 게시 (섹션 3 스펙의 JSON 파일)
+node scripts/post.mjs path/to/post.json
 
-# 여러 글 한번에
-git add content/blog/
-git commit -m "posts: [글 수]개 포스트 추가"
-git push origin main
+# 여러 글 한번에 (JSON 배열 파일 하나)
+node scripts/post.mjs path/to/posts.json
 
-# 초안 저장만 (배포 안 함)
-git add content/blog/[category]/[slug].mdx
-git commit -m "draft: [slug]"
+# 초안으로만 저장 (사이트에 노출 안 함)
+# → JSON에서 "published": false 로 작성 후 위와 동일하게 실행
+```
+
+이 스크립트는 `.env.local`의 `SUPABASE_SERVICE_ROLE_KEY`로 RLS를 우회해 직접
+Supabase `posts` 테이블에 upsert한다. git commit/push는 필요 없다.
+
+코드(컴포넌트, 페이지, 스타일 등)를 변경했을 때만 git으로 커밋하고 push한다:
+```bash
+git add <변경한 파일>
+git commit -m "설명"
 git push origin main
-# → published: false 상태라 사이트에 노출 안 됨
 ```
 
 ---
 
-## 8. 자주 쓰는 MDX 컴포넌트
+## 8. 본문 작성 시 자동 렌더링되는 요소
 
-```mdx
-{/* 제휴 링크 버튼 */}
-<AffiliateBlock
-  platform="myrealtrip"
-  text="마이리얼트립에서 확인하기"
-  url="https://www.myrealtrip.com/..."
-/>
+본문에 컴포넌트 태그를 직접 넣지 않는다 (순수 Markdown). 아래는 상세 페이지가
+구조화된 필드값을 보고 자동으로 붙여주는 것들이다:
 
-{/* ToolToolz 유입 배너 */}
-<ToolToolzBanner />
-
-{/* 정보 박스 */}
-<InfoBox type="tip | warning | info">
-  내용
-</InfoBox>
-
-{/* 코드 블록 (app-dev) */}
-```tsx
-// 코드 내용
-```
-```
+- **제휴 버튼**: `affiliate.links`에 항목을 채우면 기사 하단에 버튼으로 자동 렌더링
+- **ToolToolz 배너**: `category: "tooltoolz"`이면 기사 하단에 자동 렌더링
+- **콜아웃 박스**: 본문에서 blockquote(`> ...`)로 쓰면 자동으로 스타일 박스로 렌더링됨
+  (disclosure 문구도 이 방식 그대로 사용)
+- **코드 블록**: 일반 마크다운 코드펜스(`` ``` ``) 그대로 사용 가능 (app-dev 등)
 
 ---
 
@@ -357,6 +364,6 @@ git push origin main
 - 제휴 링크 없이 affiliate 또는 travel 카테고리 글 완성 처리 금지
 - travel 카테고리에 마이리얼트립 외 제휴 플랫폼(쿠팡·에이블리) 링크 넣지 말 것
 - affiliate 카테고리에 마이리얼트립 링크 넣지 말 것 (travel 카테고리 사용)
-- 이미 존재하는 slug로 새 파일 생성 금지 (덮어쓰기 위험)
-  → 생성 전 반드시 `ls content/blog/[category]/` 확인
-- git push 전 frontmatter 누락 여부 반드시 검토
+- 이미 존재하는 `(category, slug)` 조합으로 upsert하면 기존 글을 덮어쓴다 —
+  의도한 수정이 아니라면 slug를 다르게 지정할 것 (→ `/admin` 대시보드에서 기존 글 확인)
+- `node scripts/post.mjs` 실행 전 JSON의 필수 필드 누락 여부 반드시 검토

@@ -8,6 +8,8 @@ interface Props {
   params: { category: string }
 }
 
+export const revalidate = 60
+
 export function generateStaticParams() {
   return CATEGORIES.map((category) => ({ category }))
 }
@@ -20,11 +22,11 @@ export function generateMetadata({ params }: Props): Metadata {
   }
 }
 
-export default function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params }: Props) {
   const category = params.category as Category
   if (!CATEGORIES.includes(category)) notFound()
 
-  const posts = getPostsByCategory(category)
+  const posts = await getPostsByCategory(category)
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-12">
