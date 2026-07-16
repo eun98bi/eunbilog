@@ -6,7 +6,10 @@ import Link from 'next/link'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'eunbilog',
+  title: {
+    default: 'eunbilog',
+    template: '%s | eunbilog',
+  },
   description: '앱 개발, 야구, 부업, 행정 정보까지 — 은비의 블로그',
   metadataBase: new URL('https://eunbilog.com'),
 }
